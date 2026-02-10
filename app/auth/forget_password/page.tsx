@@ -1,19 +1,46 @@
 "use client";
 
-import { useState } from "react"; // Added useState
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import api from "@/app/lib/axios"; // Adjust this path to your axios instance
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState(""); // 1. State for email input
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
-  const handleSendCodePress = () => {
-    if (email.trim() !== "") {
-      console.log("Send Code button pressed for:", email);
+  const handleSendCodePress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim() === "") return;
+
+    setLoading(true);
+    setEmailError("");
+
+    try {
+      // 1. Call the backend API
+      await api.post("/user/forgot-password", { email });
+
+      // 2. If successful, navigate to the verification screen
+      // We pass the email as a query param so the next screen knows who to verify
+      router.push(`/auth/verification_screen?email=${encodeURIComponent(email)}`);
+      
+    } catch (error: any) {
+      console.error("Forgot Password Error:", error);
+      
+      // Handle "User not found" or other errors
+      if (error.response?.status === 404) {
+        setEmailError("No account found with this email");
+      } else {
+        setEmailError("Failed to send code. Please try again later.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 2. Logic to check if field is empty
   const isEmailEmpty = email.trim() === "";
 
   return (
@@ -30,7 +57,7 @@ export default function ForgotPasswordPage() {
             </p>
           </div>
 
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-6" onSubmit={handleSendCodePress}>
             {/* Email Field */}
             <div>
               <label className="block text-[14px] font-normal text-text-main mb-2">
@@ -38,25 +65,33 @@ export default function ForgotPasswordPage() {
               </label>
               <input
                 type="email"
-                value={email} // 3. Link state to input
-                onChange={(e) => setEmail(e.target.value)} // 4. Update state on change
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError("");
+                }}
                 placeholder="Enter your email"
-                className="w-full px-4 py-3 mb-21.75 rounded-lg border border-ui-border bg-ui-background outline-none transition-all placeholder:text-gray-400 text-text-main focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                className={`w-full px-4 py-3 rounded-lg border bg-ui-background outline-none transition-all placeholder:text-gray-400 text-text-main ${
+                  emailError 
+                  ? "border-status-error ring-1 ring-status-error/20" 
+                  : "border-ui-border focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                }`}
               />
+              {emailError && (
+                <p className="text-status-error text-[12px] mt-2 font-medium">{emailError}</p>
+              )}
             </div>
 
-            {/* 5. Dynamic Button Styling and Disabled state */}
             <button
-              type="button"
-              disabled={isEmailEmpty}
-              className={`w-full font-bold text-[14px] py-3.5 rounded-lg transition-all shadow-md active:scale-[0.98] ${
-                isEmailEmpty 
+              type="submit"
+              disabled={isEmailEmpty || loading}
+              className={`w-full font-bold py-3.5 rounded-lg transition-all shadow-md active:scale-[0.98] mt-10 ${
+                isEmailEmpty || loading
                   ? "bg-gray-500 text-white cursor-not-allowed opacity-70" 
                   : "bg-brand-primary hover:bg-brand-primary/90 text-white cursor-pointer"
               }`}
-              onClick={handleSendCodePress}
             >
-              Send Code
+              {loading ? "Sending..." : "Send Code"}
             </button>
 
             <div className="text-center mt-6">
@@ -71,6 +106,7 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
 
+      {/* Right Side Illustration */}
       <div className="hidden lg:flex flex-col justify-center items-center bg-brand-primary p-12 relative overflow-hidden text-white">
         <div className="relative z-10 w-full max-w-lg flex flex-col items-center">
           <Image

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import localFonts from "next/font/local";
 
-
-
+import "./globals.css";
 const latoFont = localFonts({
   src: [
     { path: '../public/fonts/Lato/Lato-Thin.ttf', weight: '100' },
@@ -14,17 +13,18 @@ const latoFont = localFonts({
   variable: '--font-lato',
 });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const metadata: Metadata = {
+  title: "CRM Frontend",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${latoFont.variable}`}>
-        {children}
+      <body className={latoFont.variable}>
+ 
+          {children}
+        
       </body>
     </html>
   );
 }
-

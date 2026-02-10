@@ -25,7 +25,7 @@ export default function ForgotPasswordPage() {
 
       // 2. If successful, navigate to the verification screen
       // We pass the email as a query param so the next screen knows who to verify
-      router.push(`/auth/verification_screen?email=${encodeURIComponent(email)}`);
+      router.push(`/auth/verfication_screen?email=${encodeURIComponent(email)}`);
       
     } catch (error: any) {
       console.error("Forgot Password Error:", error);
